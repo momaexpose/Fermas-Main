@@ -96,7 +96,7 @@ public class CrimeeaIntroManager : MonoBehaviour
         AddLine(boss, "If you have nothing to sell them... they won't be happy.", bossColor);
         AddLine(boss, "Take care of yourself, scoundrel. The sea is dangerous.", bossColor);
         AddLine(tu, "I understand.", playerColor);
-        AddLine(boss, "Now go. The boat is waiting for you.", bossColor);
+        AddLine(boss, "Now go. The boat is waiting for you. First, go to your home, where you will press the telephone to talk to me. If i pick up, the ship is ready to be used. You can select your destination from the big map on the right wall.", bossColor);
         AddLine(boss, "Inside, you will find two chests: one for seeds, and one for the products. You get seeds by sending the golden bird, Grasu', to bring you seeds. You can send it by pressing e on it. When you have seeds, and you want to plant them, press e on a pot, and wait until the plant finishes growing. After you have your product, you can sell to pirates that come every few minutes.", bossColor);
         AddLine(boss, "To leave, go to the map and choose where to go, then pull the lever and the ship will start.", bossColor);
         AddLine(boss, "After you get the money you owe(3000 $) you can pay it back from one of the screens inside your boat.", bossColor);

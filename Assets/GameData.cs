@@ -12,6 +12,9 @@ public class GameData : MonoBehaviour
     // Money
     public int money = 0;
 
+    // Current scene to return to (main game scene)
+    public string currentMainScene = "Crimeea";
+
     // Seeds in chest
     public List<SeedItemData> seeds = new List<SeedItemData>();
 
@@ -195,5 +198,21 @@ public class GameData : MonoBehaviour
     public static float GetPirateTimer()
     {
         return Instance != null ? Instance.pirateTimer : 0f;
+    }
+
+    // ===== CURRENT SCENE =====
+
+    public static void SetMainScene(string sceneName)
+    {
+        if (Instance != null)
+        {
+            Instance.currentMainScene = sceneName;
+            Debug.Log("[GameData] Main scene set to: " + sceneName);
+        }
+    }
+
+    public static string GetMainScene()
+    {
+        return Instance != null ? Instance.currentMainScene : "Crimeea";
     }
 }

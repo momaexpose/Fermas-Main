@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Manages pirate arrivals - plays horn sound, tracks if pirates are waiting
@@ -62,6 +63,51 @@ public class PirateManager : MonoBehaviour
         Debug.Log("[PirateManager] Ready. Pirates waiting: " + PiratesWaiting);
     }
 
+    void Start()
+    {
+        // Register this scene as the main scene to return to
+        RegisterMainScene();
+    }
+
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SaveToGameData();
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // If this is a main game scene (not Pirate, not menu), register it
+        string sceneName = scene.name.ToLower();
+        if (!sceneName.Contains("pirate") && !sceneName.Contains("menu") &&
+            !sceneName.Contains("intro") && !sceneName.Contains("sfarsit") &&
+            !sceneName.Contains("credits"))
+        {
+            GameData.SetMainScene(scene.name);
+            Debug.Log("[PirateManager] Registered main scene: " + scene.name);
+        }
+    }
+
+    void RegisterMainScene()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        string sceneLower = currentScene.ToLower();
+
+        // Only register if not a special scene
+        if (!sceneLower.Contains("pirate") && !sceneLower.Contains("menu") &&
+            !sceneLower.Contains("intro") && !sceneLower.Contains("sfarsit") &&
+            !sceneLower.Contains("credits"))
+        {
+            GameData.SetMainScene(currentScene);
+            Debug.Log("[PirateManager] Main scene set to: " + currentScene);
+        }
+    }
+
     void Update()
     {
         // Track elapsed time
@@ -72,11 +118,6 @@ public class PirateManager : MonoBehaviour
         {
             PiratesArrive();
         }
-    }
-
-    void OnDisable()
-    {
-        SaveToGameData();
     }
 
     void OnApplicationQuit()

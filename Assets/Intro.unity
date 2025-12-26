@@ -8800,7 +8800,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 2d0ea26cae4a8684ab5e53d6c190571a, type: 3}
   - {fileID: 8300000, guid: 0fa7cae2e0113ac4891ca4430167cdb5, type: 3}
   shufflePlaylist: 1
-  volume: 0
+  volume: 10
   fadeTime: 1
   playOnStart: 1
 --- !u!4 &1020333265

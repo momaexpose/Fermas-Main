@@ -428,8 +428,12 @@ public class PirateScene : MonoBehaviour
         // Pirates leave
         PirateManager.PiratesLeave();
 
-        // Return to main game
-        Debug.Log("[PirateScene] Leaving, going to " + returnScene);
-        SceneManager.LoadScene(returnScene);
+        // Return to main game - use GameData's tracked scene
+        string sceneToLoad = GameData.GetMainScene();
+        if (string.IsNullOrEmpty(sceneToLoad))
+            sceneToLoad = returnScene;
+
+        Debug.Log("[PirateScene] Leaving, going to " + sceneToLoad);
+        SceneManager.LoadScene(sceneToLoad);
     }
 }

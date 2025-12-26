@@ -38,6 +38,10 @@ public class TravelManager : MonoBehaviour
     [Header("Homes")]
     public List<Home> homes = new List<Home>();
 
+    [Header("Scene Names")]
+    [Tooltip("Scene name for being at sea (outside ship when not at home)")]
+    public string seaOutsideScene = "MainGame";
+
     void Awake()
     {
         if (Instance != null && Instance != this)
@@ -104,7 +108,7 @@ public class TravelManager : MonoBehaviour
         homes.Add(new Home
         {
             homeName = "Constanta",
-            sceneName = "constanta",
+            sceneName = "Crimeea",
             owned = true,
             purchasePrice = 0
         });
@@ -254,6 +258,9 @@ public class TravelManager : MonoBehaviour
             Home home = homes[selectedDestinationIndex];
             ClearDestination();
 
+            // Set main scene to home scene
+            GameData.SetMainScene(home.sceneName);
+
             if (SceneTransitionManager.Instance != null)
             {
                 SceneTransitionManager.Instance.TransitionToScene(home.sceneName);
@@ -267,6 +274,10 @@ public class TravelManager : MonoBehaviour
 
             currentLocationIndex = destIndex;
             currentLocationName = locations[destIndex].locationName;
+
+            // FIX: Set main scene to sea outside scene (MainGame)
+            GameData.SetMainScene(seaOutsideScene);
+            Debug.Log("[Travel] Set main scene to: " + seaOutsideScene);
 
             // Update pirate demands
             if (PirateManager.Instance != null)
@@ -298,9 +309,9 @@ public class TravelManager : MonoBehaviour
         Home home = homes[index];
         if (home.owned) return false;
 
-        if (InventoryManager.Instance != null && InventoryManager.Instance.money >= home.purchasePrice)
+        if (PlayerMoney.CanAfford(home.purchasePrice))
         {
-            InventoryManager.Instance.RemoveMoney(home.purchasePrice);
+            PlayerMoney.Remove(home.purchasePrice);
             home.owned = true;
             Debug.Log("[Travel] Bought home: " + home.homeName);
             return true;
