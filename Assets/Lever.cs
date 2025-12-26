@@ -36,16 +36,20 @@ public class Lever : MonoBehaviour
     {
         playerCamera = Camera.main;
 
-        interactionUI = FindObjectOfType<InteractionUI>();
+        interactionUI = FindFirstObjectByType<InteractionUI>();
         if (interactionUI == null)
         {
             GameObject uiObj = new GameObject("InteractionUI");
             interactionUI = uiObj.AddComponent<InteractionUI>();
         }
 
-        mapUI = FindObjectOfType<MapUI>();
+        mapUI = FindFirstObjectByType<MapUI>();
 
-        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+        }
         audioSource.spatialBlend = 1f;
         audioSource.playOnAwake = false;
     }
@@ -60,13 +64,6 @@ public class Lever : MonoBehaviour
     void CheckPlayerLooking()
     {
         playerLooking = false;
-
-        // Don't show during transitions
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.IsTransitioning())
-        {
-            if (interactionUI != null) interactionUI.Hide();
-            return;
-        }
 
         // Don't show if map is open
         if (mapUI != null && mapUI.IsOpen())
@@ -125,9 +122,6 @@ public class Lever : MonoBehaviour
 
     void HandleInteraction()
     {
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.IsTransitioning())
-            return;
-
         if (mapUI != null && mapUI.IsOpen())
             return;
 

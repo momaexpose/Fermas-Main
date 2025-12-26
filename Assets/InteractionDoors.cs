@@ -1,22 +1,17 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using System.Collections;
 
 public class InteractionDoor : MonoBehaviour
 {
-    [Header("Where does this door go?")]
-    [Tooltip("The scene this door leads to. IGNORED if this is an exit door.")]
-    public string targetSceneName = "Interior";
-
-    [Header("Is this an EXIT door?")]
-    [Tooltip("TRUE = This door takes you BACK to where you came from (use for doors INSIDE interiors)")]
-    public bool isExitDoor = false;
-
     [Header("Interaction")]
     public float interactionDistance = 3f;
     public KeyCode interactKey = KeyCode.E;
 
     [Header("UI")]
     public string promptText = "E to Open Door";
+    public string piratePromptText = "E to Meet Pirates";
     public Sprite customIcon;
 
     [Header("Audio")]
@@ -25,10 +20,28 @@ public class InteractionDoor : MonoBehaviour
     [Range(0f, 1f)]
     public float soundVolume = 0.7f;
 
+    [Header("Transition")]
+    public float fadeOutTime = 0.5f;
+    public float fadeInTime = 0.5f;
+
     private Camera playerCamera;
     private bool playerLooking = false;
     private bool playerInRange = false;
     private InteractionUI interactionUI;
+    private AudioSource audioSource;
+
+    // Static to persist across scenes
+    private static bool isTransitioning = false;
+    private static GameObject fadeCanvasObj;
+    private static Image fadeImage;
+    private static AudioSource persistentAudio;
+    private static AudioClip pendingCloseSound;
+    private static float pendingVolume;
+
+    void Awake()
+    {
+        CreateFadeCanvas();
+    }
 
     void Start()
     {
@@ -41,21 +54,66 @@ public class InteractionDoor : MonoBehaviour
             interactionUI = uiObj.AddComponent<InteractionUI>();
         }
 
-        if (SceneTransitionManager.Instance == null)
+        // Audio source for door sounds
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
         {
-            GameObject managerObj = new GameObject("SceneTransitionManager");
-            managerObj.AddComponent<SceneTransitionManager>();
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = 0f; // 2D sound
         }
 
-        // Log on start what this door does
-        if (isExitDoor)
-            Debug.Log("[Door:" + gameObject.name + "] EXIT door - will go BACK");
-        else
-            Debug.Log("[Door:" + gameObject.name + "] ENTRY door - goes to: " + targetSceneName);
+        string currentScene = SceneManager.GetActiveScene().name;
+        Debug.Log("[Door:" + gameObject.name + "] In scene: " + currentScene);
+
+        // Fade in when scene loads (if we just transitioned)
+        if (isTransitioning)
+        {
+            StartCoroutine(FadeIn());
+        }
+    }
+
+    void CreateFadeCanvas()
+    {
+        if (fadeCanvasObj != null) return;
+
+        fadeCanvasObj = new GameObject("DoorFadeCanvas");
+        DontDestroyOnLoad(fadeCanvasObj);
+
+        Canvas canvas = fadeCanvasObj.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.sortingOrder = 9999;
+
+        fadeCanvasObj.AddComponent<CanvasScaler>();
+        fadeCanvasObj.AddComponent<GraphicRaycaster>();
+
+        GameObject panel = new GameObject("FadePanel");
+        panel.transform.SetParent(fadeCanvasObj.transform, false);
+
+        fadeImage = panel.AddComponent<Image>();
+        fadeImage.color = new Color(0, 0, 0, 0); // Start transparent
+        fadeImage.raycastTarget = false;
+
+        RectTransform rect = panel.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        // Persistent audio source for close sound
+        persistentAudio = fadeCanvasObj.AddComponent<AudioSource>();
+        persistentAudio.playOnAwake = false;
+        persistentAudio.spatialBlend = 0f;
     }
 
     void Update()
     {
+        if (isTransitioning)
+        {
+            if (interactionUI != null) interactionUI.Hide();
+            return;
+        }
+
         CheckPlayerLooking();
         HandleInteraction();
     }
@@ -64,12 +122,6 @@ public class InteractionDoor : MonoBehaviour
     {
         playerLooking = false;
         playerInRange = false;
-
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.IsTransitioning())
-        {
-            if (interactionUI != null) interactionUI.Hide();
-            return;
-        }
 
         if (playerCamera == null)
         {
@@ -97,7 +149,16 @@ public class InteractionDoor : MonoBehaviour
 
                 if (interactionUI != null)
                 {
-                    interactionUI.SetPrompt(promptText);
+                    string currentScene = SceneManager.GetActiveScene().name.ToLower();
+                    if (currentScene == "interior" && PiratesAreWaiting())
+                    {
+                        interactionUI.SetPrompt(piratePromptText);
+                    }
+                    else
+                    {
+                        interactionUI.SetPrompt(promptText);
+                    }
+
                     if (customIcon != null)
                         interactionUI.SetIcon(customIcon);
                     interactionUI.Show();
@@ -116,51 +177,141 @@ public class InteractionDoor : MonoBehaviour
 
     void HandleInteraction()
     {
-        if (SceneTransitionManager.Instance != null && SceneTransitionManager.Instance.IsTransitioning())
-            return;
-
         if (playerLooking && playerInRange && Input.GetKeyDown(interactKey))
             OpenDoor();
     }
 
+    bool PiratesAreWaiting()
+    {
+        if (PirateManager.Instance != null)
+            return PirateManager.PiratesWaiting;
+        return false;
+    }
+
     void OpenDoor()
     {
+        if (isTransitioning) return;
+
         if (interactionUI != null)
             interactionUI.Hide();
 
-        string currentScene = SceneManager.GetActiveScene().name;
-        string destination;
+        string currentScene = SceneManager.GetActiveScene().name.ToLower();
+        string destination = GetDestination(currentScene);
 
-        // ========== DECIDE WHERE TO GO ==========
-        if (isExitDoor)
+        Debug.Log("[Door] " + currentScene + " --> " + destination);
+
+        // Store close sound to play after scene loads
+        pendingCloseSound = doorCloseSound;
+        pendingVolume = soundVolume;
+
+        StartCoroutine(TransitionToScene(destination));
+    }
+
+    IEnumerator TransitionToScene(string sceneName)
+    {
+        isTransitioning = true;
+
+        // Hide UI immediately
+        if (interactionUI != null)
+            interactionUI.Hide();
+
+        // Play door open sound
+        if (doorOpenSound != null)
         {
-            // EXIT DOOR - Go back to last main scene
-            destination = SceneTransitionManager.Instance.GetLastMainScene();
-            Debug.Log("[Door] EXIT: " + currentScene + " --> " + destination + " (going BACK)");
+            audioSource.PlayOneShot(doorOpenSound, soundVolume);
         }
-        else
+
+        // Fade to black
+        float timer = 0f;
+        while (timer < fadeOutTime)
         {
-            // ENTRY DOOR - Go to target scene
-            destination = targetSceneName;
-            Debug.Log("[Door] ENTRY: " + currentScene + " --> " + destination);
+            timer += Time.unscaledDeltaTime;
+            float alpha = Mathf.Clamp01(timer / fadeOutTime);
+            if (fadeImage != null)
+                fadeImage.color = new Color(0, 0, 0, alpha);
+            yield return null;
         }
-        // =========================================
 
-        // Do the transition
-        AudioClip openSound = doorOpenSound ?? SceneTransitionManager.Instance.defaultOpenSound;
-        AudioClip closeSound = doorCloseSound ?? SceneTransitionManager.Instance.defaultCloseSound;
+        if (fadeImage != null)
+            fadeImage.color = Color.black;
 
-        SceneTransitionManager.Instance.TransitionToSceneWithSounds(
-            destination,
-            openSound,
-            closeSound,
-            soundVolume
-        );
+        // Small delay at black
+        yield return new WaitForSecondsRealtime(0.1f);
+
+        // Load scene
+        SceneManager.LoadScene(sceneName);
+    }
+
+    IEnumerator FadeIn()
+    {
+        // Ensure we start black
+        if (fadeImage != null)
+            fadeImage.color = Color.black;
+
+        // Play door close sound
+        if (pendingCloseSound != null && persistentAudio != null)
+        {
+            persistentAudio.PlayOneShot(pendingCloseSound, pendingVolume);
+            pendingCloseSound = null;
+        }
+
+        // Small delay before fading in
+        yield return new WaitForSecondsRealtime(0.1f);
+
+        // Fade from black
+        float timer = 0f;
+        while (timer < fadeInTime)
+        {
+            timer += Time.unscaledDeltaTime;
+            float alpha = 1f - Mathf.Clamp01(timer / fadeInTime);
+            if (fadeImage != null)
+                fadeImage.color = new Color(0, 0, 0, alpha);
+            yield return null;
+        }
+
+        if (fadeImage != null)
+            fadeImage.color = new Color(0, 0, 0, 0);
+
+        isTransitioning = false;
+    }
+
+    string GetDestination(string currentScene)
+    {
+        switch (currentScene)
+        {
+            case "interior":
+                if (PiratesAreWaiting())
+                    return "Pirate";
+                else
+                    return "MainGame";
+
+            case "constanta":
+                return "CasaC";
+
+            case "casac":
+                return "Constanta";
+
+            case "crimeea":
+                return "Interior";
+
+            case "maingame":
+                return "Interior";
+
+            case "pirate":
+                return "MainGame";
+
+            case "outdoors":
+                return "Interior";
+
+            default:
+                Debug.LogWarning("[Door] Unknown scene: " + currentScene + ", going to MainGame");
+                return "MainGame";
+        }
     }
 
     void OnDrawGizmosSelected()
     {
-        Gizmos.color = isExitDoor ? Color.green : Color.yellow;
+        Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, interactionDistance);
     }
 }

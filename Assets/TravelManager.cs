@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 
 public class TravelManager : MonoBehaviour
@@ -52,6 +53,13 @@ public class TravelManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
 
         if (locations.Count == 0)
             CreateDefaultLocations();
@@ -108,7 +116,7 @@ public class TravelManager : MonoBehaviour
         homes.Add(new Home
         {
             homeName = "Constanta",
-            sceneName = "Crimeea",
+            sceneName = "Constanta",
             owned = true,
             purchasePrice = 0
         });
@@ -261,21 +269,21 @@ public class TravelManager : MonoBehaviour
             // Set main scene to home scene
             GameData.SetMainScene(home.sceneName);
 
-            if (SceneTransitionManager.Instance != null)
-            {
-                SceneTransitionManager.Instance.TransitionToScene(home.sceneName);
-            }
+            Debug.Log("[Travel] Going to home: " + home.sceneName);
+
+            // Load scene directly
+            SceneManager.LoadScene(home.sceneName);
         }
         else
         {
-            // Travel to location - just fade, no scene change
+            // Travel to sea location - just update location, no scene change
             int destIndex = selectedDestinationIndex;
             ClearDestination();
 
             currentLocationIndex = destIndex;
             currentLocationName = locations[destIndex].locationName;
 
-            // FIX: Set main scene to sea outside scene (MainGame)
+            // Set main scene to sea outside scene (MainGame)
             GameData.SetMainScene(seaOutsideScene);
             Debug.Log("[Travel] Set main scene to: " + seaOutsideScene);
 
@@ -285,17 +293,10 @@ public class TravelManager : MonoBehaviour
                 PirateManager.Instance.UpdateLocationDemands();
             }
 
-            // Fade out and back
-            if (SceneTransitionManager.Instance != null)
-            {
-                SceneTransitionManager.Instance.FadeOutAndBack(onComplete);
-            }
-            else
-            {
-                if (onComplete != null) onComplete();
-            }
-
             Debug.Log("[Travel] Arrived at: " + currentLocationName);
+
+            // Call completion callback
+            if (onComplete != null) onComplete();
         }
     }
 
