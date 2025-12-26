@@ -40,6 +40,16 @@ public class ProductStorage : MonoBehaviour
         cam = Camera.main;
         ui = FindFirstObjectByType<InteractionUI>();
 
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
+
+        // Load saved products
+        LoadFromGameData();
+
         // Create UI if needed
         if (ProductStorageUI.Instance == null)
         {
@@ -55,7 +65,34 @@ public class ProductStorage : MonoBehaviour
 
         DrugDatabase.Initialize();
 
-        Debug.Log("[ProductStorage] Ready with " + maxSlots + " slots");
+        Debug.Log("[ProductStorage] Ready with " + maxSlots + " slots, " + storage.items.Count + " items loaded");
+    }
+
+    void OnDisable()
+    {
+        SaveToGameData();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveToGameData();
+    }
+
+    void SaveToGameData()
+    {
+        if (storage != null)
+        {
+            GameData.SaveProducts(storage.items);
+        }
+    }
+
+    void LoadFromGameData()
+    {
+        var savedItems = GameData.LoadProducts();
+        foreach (var item in savedItems)
+        {
+            storage.AddItem(item);
+        }
     }
 
     void Update()

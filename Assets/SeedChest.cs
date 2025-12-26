@@ -34,6 +34,16 @@ public class SeedChest : MonoBehaviour
 
         DrugDatabase.Initialize();
 
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
+
+        // Load saved seeds
+        LoadFromGameData();
+
         // Create UI if needed
         if (SeedChestUI.Instance == null)
         {
@@ -52,7 +62,34 @@ public class SeedChest : MonoBehaviour
             Debug.Log("[SeedChest] Added BoxCollider");
         }
 
-        Debug.Log("[SeedChest] Ready with " + maxSlots + " slots");
+        Debug.Log("[SeedChest] Ready with " + maxSlots + " slots, " + storage.items.Count + " items loaded");
+    }
+
+    void OnDisable()
+    {
+        SaveToGameData();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveToGameData();
+    }
+
+    void SaveToGameData()
+    {
+        if (storage != null)
+        {
+            GameData.SaveSeeds(storage.items);
+        }
+    }
+
+    void LoadFromGameData()
+    {
+        var savedItems = GameData.LoadSeeds();
+        foreach (var item in savedItems)
+        {
+            storage.AddItem(item);
+        }
     }
 
     void Update()

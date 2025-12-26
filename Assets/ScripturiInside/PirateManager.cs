@@ -26,6 +26,7 @@ public class PirateManager : MonoBehaviour
     // State
     public static bool PiratesWaiting { get; private set; } = false;
     private float nextArrivalTime;
+    private float elapsedTime = 0f;
     private AudioSource audioSource;
 
     void Awake()
@@ -42,21 +43,50 @@ public class PirateManager : MonoBehaviour
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
 
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
+
+        // Load saved state
+        PiratesWaiting = GameData.GetPiratesWaiting();
+        elapsedTime = GameData.GetPirateTimer();
+
         if (piratesWaitingOnStart)
             PiratesWaiting = true;
 
         ScheduleNextArrival();
 
-        Debug.Log("[PirateManager] Ready. Next arrival in " + (nextArrivalTime - Time.time) + "s");
+        Debug.Log("[PirateManager] Ready. Pirates waiting: " + PiratesWaiting);
     }
 
     void Update()
     {
+        // Track elapsed time
+        elapsedTime += Time.deltaTime;
+
         // Check if pirates should arrive
         if (!PiratesWaiting && Time.time >= nextArrivalTime)
         {
             PiratesArrive();
         }
+    }
+
+    void OnDisable()
+    {
+        SaveToGameData();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveToGameData();
+    }
+
+    void SaveToGameData()
+    {
+        GameData.SavePirateState(PiratesWaiting, elapsedTime);
     }
 
     void ScheduleNextArrival()
@@ -87,6 +117,8 @@ public class PirateManager : MonoBehaviour
         {
             Debug.LogWarning("[PirateManager] No horn sound assigned!");
         }
+
+        SaveToGameData();
     }
 
     /// <summary>
@@ -99,8 +131,8 @@ public class PirateManager : MonoBehaviour
         if (Instance != null)
         {
             Instance.ScheduleNextArrival();
-            Debug.Log("[PirateManager] Pirates left. Next arrival in " +
-                (Instance.nextArrivalTime - Time.time) + "s");
+            Instance.SaveToGameData();
+            Debug.Log("[PirateManager] Pirates left. Next arrival scheduled.");
         }
     }
 

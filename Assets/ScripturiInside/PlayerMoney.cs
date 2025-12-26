@@ -1,12 +1,17 @@
 using UnityEngine;
 
 /// <summary>
-/// Tracks player money - persists across scenes
+/// Tracks player money - uses GameData for persistence
 /// </summary>
 public class PlayerMoney : MonoBehaviour
 {
     public static PlayerMoney Instance;
-    public static int Money { get; private set; } = 0;
+
+    public static int Money
+    {
+        get { return GameData.GetMoney(); }
+        private set { GameData.SetMoney(value); }
+    }
 
     void Awake()
     {
@@ -19,12 +24,19 @@ public class PlayerMoney : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
+
         Debug.Log("[PlayerMoney] Initialized with $" + Money);
     }
 
     public static void Add(int amount)
     {
-        Money += amount;
+        GameData.SetMoney(GameData.GetMoney() + amount);
         Debug.Log("[PlayerMoney] Added $" + amount + " (Total: $" + Money + ")");
 
         if (MoneyUI.Instance != null)
@@ -33,8 +45,10 @@ public class PlayerMoney : MonoBehaviour
 
     public static void Remove(int amount)
     {
-        Money -= amount;
-        if (Money < 0) Money = 0;
+        int current = GameData.GetMoney();
+        current -= amount;
+        if (current < 0) current = 0;
+        GameData.SetMoney(current);
         Debug.Log("[PlayerMoney] Removed $" + amount + " (Total: $" + Money + ")");
 
         if (MoneyUI.Instance != null)
@@ -48,7 +62,7 @@ public class PlayerMoney : MonoBehaviour
 
     public static void Set(int amount)
     {
-        Money = amount;
+        GameData.SetMoney(amount);
         Debug.Log("[PlayerMoney] Set to $" + Money);
 
         if (MoneyUI.Instance != null)

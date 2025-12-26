@@ -13,6 +13,10 @@ public class PlantPot : MonoBehaviour
     public float plantHeight = 0.5f;
     public float plantScale = 1f;
 
+    [Header("Identity")]
+    [Tooltip("Unique ID for this pot - leave empty to use object name")]
+    public string potId = "";
+
     // State
     private bool isPlanted = false;
     private bool isReady = false;
@@ -34,6 +38,10 @@ public class PlantPot : MonoBehaviour
     {
         Debug.Log("[PlantPot] Started: " + gameObject.name);
 
+        // Generate ID if not set
+        if (string.IsNullOrEmpty(potId))
+            potId = gameObject.name + "_" + transform.position.GetHashCode();
+
         cam = Camera.main;
         ui = FindFirstObjectByType<InteractionUI>();
 
@@ -47,7 +55,52 @@ public class PlantPot : MonoBehaviour
         if (productStorage == null)
             productStorage = FindFirstObjectByType<ProductStorage>();
 
+        // Ensure GameData exists
+        if (GameData.Instance == null)
+        {
+            GameObject obj = new GameObject("GameData");
+            obj.AddComponent<GameData>();
+        }
+
         DrugDatabase.Initialize();
+
+        // Load saved state
+        LoadFromGameData();
+    }
+
+    void OnDisable()
+    {
+        SaveToGameData();
+    }
+
+    void OnApplicationQuit()
+    {
+        SaveToGameData();
+    }
+
+    void SaveToGameData()
+    {
+        GameData.SavePlantPot(potId, isPlanted, isReady, growTimer, growTime, plantedSeed);
+    }
+
+    void LoadFromGameData()
+    {
+        var data = GameData.LoadPlantPot(potId);
+        if (data != null && data.isPlanted)
+        {
+            isPlanted = data.isPlanted;
+            isReady = data.isReady;
+            growTimer = data.growTimer;
+            growTime = data.growTime;
+
+            if (data.plantedSeed != null)
+            {
+                plantedSeed = data.plantedSeed.ToSeedItem();
+                SpawnPlantVisual();
+            }
+
+            Debug.Log("[PlantPot] Loaded state for " + potId + ": planted=" + isPlanted + ", ready=" + isReady);
+        }
     }
 
     void Update()
@@ -186,6 +239,12 @@ public class PlantPot : MonoBehaviour
 
         Debug.Log("[PlantPot] Grow time: " + growTime + " seconds");
 
+        SpawnPlantVisual();
+        SaveToGameData();
+    }
+
+    void SpawnPlantVisual()
+    {
         // Destroy old plant
         if (currentPlant != null)
             Destroy(currentPlant);
@@ -245,6 +304,8 @@ public class PlantPot : MonoBehaviour
             Destroy(currentPlant);
             currentPlant = null;
         }
+
+        SaveToGameData();
     }
 
     void OnDrawGizmos()
