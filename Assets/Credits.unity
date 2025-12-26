@@ -388,11 +388,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f6b0d0e65a87524d9b6889de251bf9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CreditsScroller
-  creditsText: "\r\nFermas\r\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\r\n\r\nCreated
-    By\r\nMoma\r\n\r\nProgramming\r\nMoma, Claude AI, ChatGPT\r\n\r\nArt & Design\r\nMoma,
-    Sketchfab Artists\r\n\r\nMusic\r\nRAVA, ADELINMM, 4 226\r\n\r\nSound Effects\nPixabay
-    Artists\r\n\r\nSpecial Thanks\r\nCristi\nGrasu\n\r\nMade with Unity\r\n\xA9 2025
-    SpritzStudios\r\nAll Rights Reserved\r\n\r\nThank you for playing!\r\n"
+  creditsText: "F E R M A S\r\n\r\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n\r\nCreated
+    & Developed by\r\nMoma\r\n\r\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n\r\nA
+    SpritzStudios Production\r\n\r\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n\r\nBuilt
+    with Unity\r\n\r\nSpecial thanks to all asset creators\r\nwhose work helped bring
+    this game to life.\r\n\r\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\r\n\r\n\xA9
+    2025 SpritzStudios\r\nAll Rights Reserved\r\n\r\nThank you for playing!"
   scrollSpeed: 100
   waitAtEnd: 2
   nextScene: Intro
