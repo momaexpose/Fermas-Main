@@ -393,10 +393,10 @@ MonoBehaviour:
     Sketchfab Artists\r\n\r\nMusic\r\nRAVA, ADELINMM, 4 226\r\n\r\nSound Effects\nPixabay
     Artists\r\n\r\nSpecial Thanks\r\nCristi\nGrasu\n\r\nMade with Unity\r\n\xA9 2025
     SpritzStudios\r\nAll Rights Reserved\r\n\r\nThank you for playing!\r\n"
-  scrollSpeed: 50
-  waitAtEnd: 5
+  scrollSpeed: 100
+  waitAtEnd: 2
   nextScene: Intro
-  fontSize: 70
+  fontSize: 60
 --- !u!4 &1461939843
 Transform:
   m_ObjectHideFlags: 0
