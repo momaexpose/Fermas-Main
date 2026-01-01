@@ -8800,7 +8800,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 2d0ea26cae4a8684ab5e53d6c190571a, type: 3}
   - {fileID: 8300000, guid: 0fa7cae2e0113ac4891ca4430167cdb5, type: 3}
   shufflePlaylist: 1
-  volume: 10
+  volume: 0
   fadeTime: 1
   playOnStart: 1
 --- !u!4 &1020333265
@@ -11576,15 +11576,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ee260000d4d76645a8bac1f9b64c0bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionDoor
-  targetSceneName: Interior
-  isExitDoor: 0
   interactionDistance: 4
   interactKey: 101
   promptText: E to Open Door
+  piratePromptText: E to Meet Pirates
   customIcon: {fileID: 21300000, guid: 5651b62e9f2c0324e9361e9c873e5b1c, type: 3}
   doorOpenSound: {fileID: 8300000, guid: 8cf386890344eef47be941a264fce1fa, type: 3}
   doorCloseSound: {fileID: 8300000, guid: 50e187f9961a31f4890443c0db3b449c, type: 3}
   soundVolume: 0.7
+  fadeOutTime: 0.5
+  fadeInTime: 0.5
 --- !u!65 &1313666860
 BoxCollider:
   m_ObjectHideFlags: 0
